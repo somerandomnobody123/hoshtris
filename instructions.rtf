@@ -1,0 +1,568 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2869
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Roman;\f1\fswiss\fcharset0 ArialMT;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs29\fsmilli14667 \cf0 ## **Prompt for Claude Code: Modern Tetris Puzzle Platform**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 IMPORTANT NOTICE: IF UNCLEAR ABOUT **ANY** INSTRUCTION, ASK ME BEFORE ACTING: THIS ALSO INCLUDES ANY BIG DELETION/MASS EDIT OF FILES
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Throughout the document, puzzle and position are used interchangeably. Both are referencing the same thing, a board state of minos with a queue that can be saved & loaded within a bundle.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Project Overview**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 Create a browser-based Modern Tetris stacker (accessible on Chrome, Edge, Opera GX, Firefox) inspired by Four-tris (https://tetris.wiki/Four-tris) but web-native and cross-platform. The primary purpose is a **shareable puzzle practice platform** where users can save, import, export, and practice specific board positions as organized collections called "bundles."
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **UI Reference:** Modern, clean stacker interface similar to Four-tris (minimalist, dark theme compatible, responsive layout with hold/next queue visible, centered playfield).
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Core Game Engine**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 #### **Board & Mechanics**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Playfield:** 10\'d724 grid (10 wide, 22 visible + 2 hidden rows at top)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Rotation System:** SRS+ (Super Rotation System) with complete kick tables - copy rotation data from TETR.IO
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- Standard kicks for J, L, S, T, Z (5 states each)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- I-piece kicks (4 states)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- O-piece (no kicks needed)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- 180-degree rotation kicks (SRS+ style)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Randomizer:** 7-Bag system (one of each piece per bag, shuffled)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Top-out Detection:** Standard\'97piece spawn collision or lock above visible field
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 #### **Spin Detection System (Configurable)**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 Implement three detection modes selectable in settings:
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 | Mode | Detection Rules |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 |------|----------------|
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **T-Spin Only** | Classic 3-corner T-spin detection. Immobile = Mini, otherwise Single/Double/Triple |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **All-Spin+** | All pieces can spin. Immobile spins count as Mini. Full detection for all piece types |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **All-Mini+** | All spins count as Mini regardless of corners/immobile. **T-spins still send damage as normal T-spins (not reduced)** |
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **T-Spin Detection Logic:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - T-Spin detection information available online for specific coding\'a0
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Check 2 front corners + 2 back corners of T piece
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - 3+ corners filled = T-spin
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - If immobile (no kicks used, piece couldn't move) = Mini
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Otherwise standard T-spin (Single/Double/Triple based on lines cleared)
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Puzzle Bundle System**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 This is the **core differentiator**\'97a robust save/load system for practice positions. The system operates in **two distinct modes**: Bundle Player and Bundle Editor.
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 Upon opening a bundle, the user should be given an option between playing the bundle or editing it. If nothing is loaded, then open bundle editor with a new single empty position, essentially a \'93blank bundle\'94. Blank bundle should be opened by default on website open, or if a \'93create new\'94 bundle button is pressed.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 #### **Data Structure Requirements**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Board State Storage:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Grid must store color information, not just occupied/empty
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Values: 0 (empty), 1 (garbage), 2-8 (I, O, T, S, Z, J, L piece colors respectively)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - This preserves visual realism when screenshots are saved or positions are shared
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Bundle Structure:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Metadata: version, timestamps, author, description, unique identifier
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Nested organization: Bundles contain multiple puzzles
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Each puzzle contains: board state (with colors), hold piece, queue, categories, goals, optional solution data, attempt statistics
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Categories System:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Several categories, e.g. t-spin-setup, all-spin-setup, downstack, count-to-4, opening, midgame, c-spin, dt cannon, STSD,\'a0 pc-setup
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Sub-categories for specificity (e.g., "double", "triple", "fin" for t-spin setups)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Spin requirement tags per category: t-spin-only, all-spin, none
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Goals:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Types: clear_lines, perfect_clear, send_damage, maintain_b2b, specific_setup. These should come as a string that the user can read, but does not necessarily have to clear in order to \'93pass\'94 the puzzle. Essentially, goals are a freeform text section describing the position. Queue is fixed per position. When pieces are exhausted, spawn stops. Retrying same position resets queue to initial state, or the user can also move onto the next position.
+\f0\fs24 \
+\
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Bundle Player Mode**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Mode for practicing and interacting with saved positions.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Navigation UI:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 When a bundle is loaded, the interface must display:
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 1. **Total position count** in the bundle (e.g., "Position 1 of 47")
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 2. **Navigation controls:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0\'a0- Arrow buttons to move between positions
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0\'a0- Direct input field accepting values 1 through total count
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0\'a0- Visual indicator of current position in sequence
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0\'a0- Filter for categories: for example only giving \'93t-spin double\'94 puzzles within the bundle. Text search, does not persist across sessions
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Features:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Play through positions sequentially or jump to specific index
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Track statistics per attempt (pieces placed, lines cleared, etc.)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Reset position to initial state
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Visual indicators for completed/attempted positions
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Bundle Editor Mode**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Separate mode for creating and modifying bundle contents.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Navigation:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Same position navigation as Player Mode (see total count, move between positions, direct input)
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Editing Capabilities:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Modify position contents:** Change hold piece, queue, board state, and tags/categories
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Manage position count:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- Create new blank position in bundle
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- Duplicate existing position (inserts copy after current)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 \'a0\'a0- Delete current position from bundle
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Reorder positions:** Move current position up or down in the sequence, or drag-and-drop to reorder
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Export bundle:** Save entire bundle to file
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Export position:** Save position as a file
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Editor Tools:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Visual board editor with piece color preservation
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Tools for placing each piece type, garbage, and erasing
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Hold piece selector (single character from \{I, O, T, S, Z, J, L\}, NON case sensitive or null/empty for empty hold)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Queue editor: string of characters from \{I, O, T, S, Z, J, L\}, case-insensitive, no 7-bag enforcement required in editor. No length limit
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Category tagging with autocomplete
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Goal configuration panel
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Editor should still be able to place pieces as normal
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - "Test Play" functionality to immediately try current position without leaving editor. Test Play always resets position to initial state. Statistics from test plays are not saved to attempt history.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Screenshot System**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 - Take a picture / load a screenshot of a board state not necessarily on the web page, similar to the screenshot function, and load it into the current board
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Loading a screenshot creates a new standalone position, closing any active bundle if in the bundle player, or asks to create a new position / replace current position if in the board editor. Warn if unsaved changes exist.
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Preserves piece colors exactly as displayed
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Saves hold piece and visible queue in the image
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Similar functionality to Four-tris screenshot feature
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Import/Export System**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 - Export individual bundles or single puzzles (file type can be standardized for both individual position and as a bundle, individual positions can just be considered a bundle with a single position)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Import validation with error reporting for malformed data
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Drag-and-drop file import support
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Duplicate detection based on board state when importing
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Input & Settings System**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 #### **Handling Settings**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 Handling should be changeable with a moveable BAR or typing in a value in frames
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **DAS (Delayed Auto Shift):** Configurable timing (17ms to 333ms)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **ARR (Auto Repeat Rate):** Configurable timing (0ms to 83ms)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **DCD (DAS Cut Delay):** Configurable timing (0ms to 333ms)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **SDF (Soft Drop Factor):** Configurable multiplier with **instant option** (immediate placement to bottom) (5x to infinite x)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - **Gravity:** Configurable (default 0G for puzzle mode, up to 20g, or instantly drop)
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Definition for DCD: If not set to 0, any ongoing DAS movement will be delayed by a set amount of frames following the dropping or rotating of a piece, measured in the frame value set.
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 #### **Keybind Configuration**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 Fully remappable controls with keyboard event capture:
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 | Action | Default |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 |--------|---------|
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Move Left | Arrow Left |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Move Right | Arrow Right |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Soft Drop | Arrow Down |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Hard Drop | Space |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Rotate CW | Arrow Up |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Rotate CCW | Z |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Rotate 180 | A |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Hold | C or Shift |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Undo | Ctrl+Z |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Redo | Ctrl+Y |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Reset Puzzle | R |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | Pause | Escape |
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Features:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Include conflict detection for overlapping key assignments
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Undo/Redo applies to piece placements during gameplay and all editor modifications. Store up to 5 undos.
+\f0\fs24 \
+\
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Puzzle Session Tracking**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 For each puzzle attempt, track and display:
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 | Metric | Description |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 |--------|-------------|
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Pieces Placed** | Count of pieces locked |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Lines Cleared** | Total lines cleared |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Lines Sent** | Attack sent using standard damage table |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Attack Per Piece** | Lines Sent \'f7 Pieces Placed |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **B2B Chain** | Current back-to-back chain |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Spin Counts** | T-spins, All-spins, Mini counts |
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 | **Efficiency** | Lines cleared vs optimal solution |
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 Real-time HUD during puzzle, reset these after puzzle restart / moving onto next position
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **UI/UX Specifications**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Layout Structure:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Hold piece display (left)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Next queue display (right, multiple pieces visible)
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Centered 10\'d720 playfield
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Statistics panel
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Goal indicator
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - DAS/ARR visual indicators
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Mode indicator (Player vs Editor)
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Visual Style:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Dark theme default with customization options
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Ghost piece showing landing preview
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 **Responsive Design:**
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Minimum width for full desktop UI
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ---
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 ### **Technical Notes**
+\f0\fs24 \
+\
+
+\f1\fs29\fsmilli14667 - Target 60fps rendering performance
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Local database storage for puzzle collections
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Efficient board state compression for import/export
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - State management capable of handling complex puzzle and editor interactions
+\f0\fs24 \
+
+\f1\fs29\fsmilli14667 - Audio system for game feedback (optional background music)
+\f0\fs24 \
+\
+\
+}

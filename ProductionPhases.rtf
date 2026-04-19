@@ -1,0 +1,283 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2869
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs29\fsmilli14667 \cf0 \expnd0\expndtw0\kerning0
+## **Phase 1: Foundation (Prompts 1-4)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 1: HTML Shell & Canvas Setup**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create the basic HTML structure with a centered canvas element for the Tetris playfield. Include placeholder divs for hold piece (left), next queue (right), and statistics panel. Set up responsive CSS so the canvas maintains 10:20 aspect ratio. Dark theme default. No game logic yet\'97just the visual layout matching Four-tris style.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 2: Basic Rendering System**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement canvas drawing functions: drawGrid, drawCell, drawPiece. Define color constants for the 7 tetrominoes (I=cyan, O=yellow, T=purple, S=green, Z=red, J=blue, L=orange) and garbage (gray). Create a 10\'d724 array state (0 empty, 1-7 piece colors, 8 garbage). Render static board state to verify colors display correctly.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 3: Piece Definitions & Basic State**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Define the 7 tetromino shapes as coordinate arrays. Create a game state object with board array, current piece (type, position, rotation), hold, and queue. Implement spawnPiece function that places new piece at top center. No movement yet\'97just spawn and render.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 4: Basic Movement & Lock**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement piece movement: left, right, soft drop (one cell). Add collision detection against walls and locked cells. Implement hard drop (instant bottom) and lockPiece function that transfers current piece to board array. Handle line clears when rows are full. Top-out detection when spawn is blocked.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 2: Rotation System (Prompts 5-6)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 5: SRS Rotation Tables**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement SRS kick tables for J, L, S, T, Z pieces (5 rotation states: 0\uc0\u8594 1, 1\u8594 0, 1\u8594 2, 2\u8594 1, 2\u8594 3, 3\u8594 2, 3\u8594 0, 0\u8594 3). Store as offset arrays. Create rotatePiece function that attempts basic rotation, then tests kick table offsets if collision occurs. Apply first valid kick or reject rotation.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 6: I-Piece, O-Piece & 180\'b0 Kicks**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Add I-piece kick table (4 states, different offsets). O-piece rotation (no kicks needed, just state change). Implement 180\'b0 rotation with SRS+ style kicks: test rotation, if fail try offsets (0,0), (0,1), (1,0), (0,-1), (-1,0), (1,1), (-1,-1), (1,-1), (-1,1) in order.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 3: Input & Handling (Prompts 7-9)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 7: DAS/ARR/SDF Implementation**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create handling settings object: DAS (17-333ms), ARR (0-83ms), SDF (5x-infinity/instant). Implement DAS: on key hold, wait DAS then repeat at ARR interval. SDF multiplies gravity or instant drops. Use requestAnimationFrame for timing. Visual indicators showing DAS charge state.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 8: Keybind System**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create configurable keybind map (left, right, cw, ccw, 180, hd, sd, hold). Capture KeyboardEvent codes. Default: arrows for movement, Z/X/A for rotations, space=HD, C=hold. Conflict detection if two actions share same key. Save to localStorage.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 9: Undo/Redo Stack**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement move history stack. Each entry: board state, current piece, hold, queue. Undo pops state back. Redo pushes forward. Clear redo stack on new action. Bind Ctrl+Z/Ctrl+Y. Limit stack to 50 states for memory.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 4: Randomizer & Queue (Prompts 10-11)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 10: 7-Bag Randomizer**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement 7-bag: generate array [I,O,T,S,Z,J,L], shuffle, return sequentially. When bag empty, generate new shuffled bag. Queue displays next 5 pieces. Current piece spawns from queue front, queue advances.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 11: Hold System**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement hold: swap current piece with hold (or store if empty). Can only hold once per piece spawn. Visual hold display updates immediately. Reset hold availability on piece lock.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 5: Spin Detection (Prompts 12-13)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 12: T-Spin Detection**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Implement 3-corner detection: check 2 front + 2 back corners of T-piece relative to rotation. 3+ filled = T-spin. Track if piece was immobile (no successful kicks). If immobile = Mini, else standard. Display "T-Spin Single/Double/Triple/Mini" text.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 13: All-Spin & All-Mini Modes**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Extend spin detection to all pieces using same corner logic adapted per piece shape. All-Spin+: immobile spins = Mini for non-T pieces. All-Mini+: all spins = Mini, but T-spins still send full damage. Settings toggle between T-Spin Only / All-Spin+ / All-Mini+.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 6: Game Modes & UI (Prompts 14-15)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 14: Statistics Tracking**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Track per attempt: pieces placed, lines cleared, lines sent (use standard damage table), attack per piece (sent/placed), B2B chain count, spin counts by type. Real-time HUD display. Reset on puzzle restart.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 15: Settings Panel UI**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create settings modal with sliders/number inputs for DAS, ARR, DCD, SDF, gravity. Keybind configuration with click-to-capture. Spin mode dropdown. Save all to localStorage, load on startup.
+\f1\fs24 \
+\
+
+\fs30 \'97
+\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 7: Bundle Foundation (Prompts 16-19)** 
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 16: Bundle Data Structure**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create Bundle and Position classes. Position: id, name, board array (10\'d724 with colors), hold char, queue string, categories array, goal string. Bundle: id, name, positions array, metadata. Methods: addPosition, removePosition, duplicatePosition, reorderPositions.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 17: Bundle Navigation UI**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 When bundle loaded, show "Position X of Y" indicator. Left/right arrows to navigate. Number input to jump to specific index. Visual progress indicator. Filter dropdown for categories (t-spin-setup, downstack, etc.).
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 18: Board Painting Tools**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Create editor toolbar with 9 paint tools: empty (erase), garbage (gray), and 7 tetromino colors (I=cyan, O=yellow, T=purple, S=green, Z=red, J=blue, L=orange). Click tool to select active color. Hover over canvas highlights target cell. Click/drag on board to paint cells with selected color. Visual feedback: toolbar shows selected tool with border highlight, cursor changes to indicate paint mode.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 19: Position Editor Basics**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Integrated board editor: use painting tools from Prompt 18 to modify board state. Hold selector (dropdown: empty, I, O, T, S, Z, J, L). Queue input field (string of chars). Save current state to position object. Live preview updates as you paint.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 8: Bundle Editor Full (Prompts 20-22)** 
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 20: Position Management**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Buttons: New Position (adds blank at end), Duplicate Position (inserts copy after current), Delete Position (confirm if >1 remains). Update navigation counts immediately.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 21: Reordering & Categories**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Drag-and-drop or up/down buttons to reorder positions. Category tagging: autocomplete input for primary tags (t-spin-setup, all-spin-setup, downstack, count-to-4, opening, midgame, c-spin, dt-cannon, STSD, pc-setup). Sub-category field. Goal text input.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 22: Test Play & Export**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 "Test Play" button loads current position into game mode without saving bundle state. Return to editor button. Export button generates JSON file download of entire bundle. Export single position as bundle with one entry.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 9: Import & Screenshots (Prompts 23-25)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 23: Import System**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Drag-and-drop file import. Parse JSON validation: check required fields (board array dimensions, valid piece chars). Error modal for malformed files. Merge or replace current bundle option. Duplicate detection (hash board state, warn if exists).
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 24: Screenshot Capture**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Canvas toDataURL export of current board state including hold and visible queue. Download PNG. Option to include/exclude ghost piece overlay.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 25: Screenshot Loading**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 File input accepts image. Analyze pixel colors to reconstruct board grid (map similar colors to piece IDs). Detect hold/queue from image regions if possible, else manual entry. Loading creates new standalone position, closes active bundle.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ---
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 ## **Phase 10: Polish & Integration (Prompts 26-28)**
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 26: Mode Switching**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Main menu: Play Bundle, Edit Bundle, Free Play (blank). On bundle load, prompt "Play or Edit?" Blank bundle opens in editor with single empty position. Mode indicator in UI (Player vs Editor).
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 27: Goal Display & Queue Exhaustion**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Display goal string prominently. When queue exhausted in player mode, stop spawning pieces. User must reset or navigate to next position. No automatic queue regeneration.
+\f1\fs24 \
+\
+
+\f0\fs29\fsmilli14667 **Prompt 28: Final Integration & Cleanup**
+\f1\fs24 \
+
+\f0\fs29\fsmilli14667 Ensure all modules connect: game loop, editor, bundle manager, settings. Verify localStorage persistence. Test import/export roundtrip. Confirm 60fps performance. Add "unsaved changes" warnings when closing bundles.
+\f1\fs24 \
+\
+\
+\
+}
