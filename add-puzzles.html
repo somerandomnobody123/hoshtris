@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoshtris — Add Puzzles</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:  #0e0e12;
+      --bg-panel:    #1a1a22;
+      --bg-cell:     #131318;
+      --border:      #2a2a38;
+      --text-primary:#e8e8f0;
+      --text-muted:  #6b6b88;
+      --text-label:  #9898b8;
+      --accent:      #5a5aff;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    code {
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 0.9em;
+      background: rgba(255,255,255,0.07);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* ── Gate ──────────────────────────────────────────────────────────── */
+    #gate {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-primary);
+      z-index: 10;
+    }
+
+    .gate-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 36px 40px;
+      width: min(360px, 92vw);
+      display: flex; flex-direction: column; gap: 16px;
+      text-align: center;
+    }
+
+    .gate-title {
+      font-size: 17px; font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .gate-sub {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    .gate-input {
+      width: 100%;
+      background: var(--bg-cell);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 5px;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .gate-input:focus { outline: none; border-color: var(--accent); }
+
+    .gate-error {
+      font-size: 12px; color: #f07070; min-height: 16px;
+    }
+
+    /* ── Shared button ─────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--bg-cell);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-size: 12px; font-family: inherit; font-weight: 500;
+      cursor: pointer; user-select: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn:hover  { border-color: var(--accent); }
+    .btn:active { background: rgba(90,90,255,0.12); }
+    .btn.primary {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    .btn.primary:hover  { background: #6a6aff; border-color: #6a6aff; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    /* ── Main layout ───────────────────────────────────────────────────── */
+    #main { display: none; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .header-title {
+      font-size: 15px; font-weight: 700; letter-spacing: 1px;
+    }
+
+    .header-sub {
+      font-size: 11px; color: var(--text-muted);
+    }
+
+    #content {
+      max-width: 860px;
+      margin: 32px auto;
+      padding: 0 24px 60px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* ── Error / status banners ────────────────────────────────────────── */
+    #ap-error {
+      display: none;
+      font-size: 12px; color: #f07070;
+      background: rgba(240,112,112,0.08);
+      border: 1px solid rgba(240,112,112,0.25);
+      border-radius: 4px; padding: 10px 14px;
+      white-space: pre-wrap; line-height: 1.5;
+    }
+
+    #ap-status {
+      font-size: 12px; color: var(--text-label); line-height: 1.6;
+    }
+
+    /* ── Upload step ───────────────────────────────────────────────────── */
+    #ap-upload-area {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 48px 32px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 16px; text-align: center;
+    }
+
+    #ap-upload-area p {
+      font-size: 13px; color: var(--text-label);
+      max-width: 400px; line-height: 1.6;
+    }
+
+    /* ── List controls ─────────────────────────────────────────────────── */
+    #ap-list-controls {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    #ap-pos-count {
+      flex: 1; font-size: 13px; font-weight: 600; color: var(--text-label);
+    }
+
+    /* ── Position cards ────────────────────────────────────────────────── */
+    #ap-pos-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .ap-pos-item {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .ap-pos-header {
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; user-select: none;
+    }
+
+    .ap-pos-header input[type="checkbox"] {
+      width: 16px; height: 16px;
+      cursor: pointer; flex-shrink: 0;
+      accent-color: var(--accent);
+    }
+
+    .ap-pos-name {
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+    }
+
+    .ap-pos-meta {
+      display: flex; flex-wrap: wrap; gap: 6px; padding-left: 26px;
+    }
+
+    .ap-meta-chip {
+      font-size: 11px; color: var(--text-muted);
+      background: rgba(90,90,255,0.08);
+      border: 1px solid rgba(90,90,255,0.18);
+      border-radius: 3px; padding: 2px 7px;
+    }
+
+    .ap-pos-fields {
+      padding-left: 26px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+
+    .ap-field-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text-label);
+    }
+
+    .ap-field-label {
+      width: 72px; flex-shrink: 0;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .ap-field-hint { font-size: 10px; color: var(--text-muted); }
+
+    .ap-field-inline { display: flex; gap: 24px; flex-wrap: wrap; }
+
+    .ap-name-input, .ap-goal-input {
+      flex: 1; min-width: 0;
+      background: var(--bg-cell); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 3px;
+      padding: 4px 8px; font-size: 12px; font-family: inherit;
+    }
+
+    .ap-diff-input {
+      width: 58px;
+      background: var(--bg-cell); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 3px;
+      padding: 4px 6px; font-size: 12px; font-family: inherit;
+    }
+
+    .ap-spin-select {
+      background: var(--bg-cell); border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 3px;
+      padding: 4px 6px; font-size: 12px; font-family: inherit;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────────────── */
+    #ap-list-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    #ap-footer-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Password gate ───────────────────────────────────────────────────────── -->
+<div id="gate">
+  <div class="gate-panel">
+    <div class="gate-title">Hoshtris — DB Admin</div>
+    <div class="gate-sub">Enter the password to continue.</div>
+    <input type="password" id="gate-input" class="gate-input" placeholder="••••••••" autocomplete="off">
+    <button class="btn primary" id="gate-btn">Enter</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- ── Main admin UI ───────────────────────────────────────────────────────── -->
+<div id="main">
+  <header>
+    <span class="header-title">Add Puzzles to Database</span>
+    <span class="header-sub">Changes are downloaded as <code>puzzles.db</code> — replace <code>data/puzzles.db</code> then run <code>node tools/generate-embed.js</code></span>
+  </header>
+
+  <div id="content">
+
+    <div id="ap-error"></div>
+
+    <!-- Step 1: upload -->
+    <div id="ap-upload-area">
+      <p>Upload a <code>.hosh</code> file to choose which positions to add to the puzzle database.</p>
+      <button class="btn primary" id="ap-upload-btn">Choose .hosh File</button>
+      <input type="file" id="ap-file-input" accept=".hosh,.json" style="display:none;" aria-hidden="true">
+    </div>
+
+    <!-- Step 2: checklist (hidden until file loaded) -->
+    <div id="ap-list-wrap" style="display:none;">
+
+      <div id="ap-list-controls">
+        <span id="ap-pos-count"></span>
+        <button class="btn" id="ap-select-all">Select All</button>
+        <button class="btn" id="ap-deselect-all">Deselect All</button>
+        <button class="btn" id="ap-back-btn">&#8592; Load Different File</button>
+      </div>
+
+      <div id="ap-pos-list"></div>
+
+      <div id="ap-list-footer">
+        <div id="ap-status"></div>
+        <div id="ap-footer-actions">
+          <button class="btn primary" id="ap-submit-btn">Add Selected to Database</button>
+        </div>
+      </div>
+
+    </div><!-- /ap-list-wrap -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- SQL.js (try HTTP fetch first; falls back to base64 embed for file://) -->
+<script src="js/vendor/sql-wasm.js"></script>
+<script src="js/vendor/sql-wasm-embed.js"></script>
+<script src="data/puzzles-embed.js"></script>
+
+<script>
+'use strict';
+
+// ── Change this password before sharing the project ───────────────────────────
+const ADMIN_PASSWORD = 'hoshtris';
+
+// ── Password gate ─────────────────────────────────────────────────────────────
+
+function _checkGate() {
+  const val = document.getElementById('gate-input').value;
+  if (val === ADMIN_PASSWORD) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    _initDb();
+  } else {
+    document.getElementById('gate-error').textContent = 'Incorrect password.';
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-input').focus();
+  }
+}
+
+document.getElementById('gate-btn').addEventListener('click', _checkGate);
+document.getElementById('gate-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') _checkGate();
+});
+
+// ── PuzzleDB (self-contained subset) ─────────────────────────────────────────
+
+const PuzzleDB = {
+  _db: null,
+
+  isReady() { return this._db !== null; },
+
+  async load() {
+    if (this._db) return;
+    let wasmBinary = null;
+    try {
+      const r = await fetch('js/vendor/sql-wasm.wasm');
+      if (r.ok) wasmBinary = await r.arrayBuffer();
+    } catch (_) {}
+    if (!wasmBinary) {
+      if (typeof SQL_WASM_B64 === 'undefined') throw new Error('sql-wasm-embed.js not loaded.');
+      wasmBinary = _b64ToArr(SQL_WASM_B64).buffer;
+    }
+    const SQL = await initSqlJs({ wasmBinary });
+
+    let buf = null;
+    try {
+      const resp = await fetch('data/puzzles.db');
+      if (resp.ok) buf = new Uint8Array(await resp.arrayBuffer());
+    } catch (_) {}
+    if (!buf) {
+      if (typeof PUZZLES_DB_B64 === 'undefined') throw new Error('puzzles-embed.js not loaded and fetch() unavailable.');
+      buf = _b64ToArr(PUZZLES_DB_B64);
+    }
+    this._db = new SQL.Database(buf);
+  },
+
+  query(sql, params = {}) {
+    const stmt = this._db.prepare(sql);
+    stmt.bind(params);
+    const rows = [];
+    while (stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    return rows;
+  },
+
+  run(sql, params = {}) {
+    this._db.run(sql, params);
+    return this._db.getRowsModified();
+  },
+
+  exportDb() {
+    return this._db.export();
+  },
+};
+
+function _b64ToArr(b64) {
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+// ── DB init ───────────────────────────────────────────────────────────────────
+
+function _initDb() {
+  PuzzleDB.load().catch(err => _showError('Could not load database: ' + err.message));
+}
+
+// ── .hosh validation (mirrors export.js validateBundle) ───────────────────────
+
+const VALID_PIECE_CHARS = new Set(['I','O','T','S','Z','J','L']);
+
+function validateBundle(obj) {
+  if (!obj || typeof obj !== 'object') return 'File is not a valid JSON object.';
+  if (!Array.isArray(obj.positions))   return 'Missing required field: positions (array).';
+  if (obj.positions.length === 0)      return 'Bundle contains no positions.';
+  for (let i = 0; i < obj.positions.length; i++) {
+    const p = obj.positions[i];
+    const label = `Position ${i + 1}${p.name ? ` ("${p.name}")` : ''}`;
+    if (!Array.isArray(p.board))       return `${label}: board is not an array.`;
+    if (p.board.length !== 24)         return `${label}: board must have 24 rows (got ${p.board.length}).`;
+    for (let r = 0; r < 24; r++) {
+      if (!Array.isArray(p.board[r]))  return `${label}: row ${r} is not an array.`;
+      if (p.board[r].length !== 10)    return `${label}: row ${r} must have 10 cells (got ${p.board[r].length}).`;
+      for (let c = 0; c < 10; c++) {
+        const v = p.board[r][c];
+        if (typeof v !== 'number' || v < 0 || v > 8 || !Number.isInteger(v))
+          return `${label}: invalid cell value ${v} at row ${r}, col ${c}.`;
+      }
+    }
+    if (p.hold !== undefined && p.hold !== '' && !VALID_PIECE_CHARS.has(p.hold))
+      return `${label}: invalid hold "${p.hold}".`;
+    if (p.queue !== undefined) {
+      if (typeof p.queue !== 'string') return `${label}: queue must be a string.`;
+      for (const ch of p.queue.toUpperCase())
+        if (!VALID_PIECE_CHARS.has(ch)) return `${label}: invalid queue character "${ch}".`;
+    }
+  }
+  return null;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let _positions = [];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function _showError(msg) {
+  const el = document.getElementById('ap-error');
+  el.textContent   = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function _esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+
+function _reset() {
+  _positions = [];
+  document.getElementById('ap-file-input').value   = '';
+  document.getElementById('ap-upload-area').style.display = '';
+  document.getElementById('ap-list-wrap').style.display   = 'none';
+  document.getElementById('ap-status').textContent        = '';
+  _showError('');
+}
+
+function _handleFile(file) {
+  if (!file) return;
+  _showError('');
+
+  if (!file.name.endsWith('.hosh') && !file.name.endsWith('.json')) {
+    _showError(`"${file.name}" is not a .hosh file.`);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    let obj;
+    try { obj = JSON.parse(e.target.result); }
+    catch (err) { _showError(`Could not parse "${file.name}" as JSON: ${err.message}`); return; }
+
+    const err = validateBundle(obj);
+    if (err) { _showError(`Invalid bundle: ${err}`); return; }
+
+    _positions = obj.positions;
+    _renderList();
+  };
+  reader.onerror = () => _showError(`Failed to read "${file.name}".`);
+  reader.readAsText(file);
+}
+
+// ── Position checklist ────────────────────────────────────────────────────────
+
+function _renderList() {
+  const list = document.getElementById('ap-pos-list');
+  list.innerHTML = '';
+
+  _positions.forEach((pos, i) => {
+    const cats = Array.isArray(pos.categories) ? pos.categories : [];
+    let defaultSpin = '';
+    if (cats.includes('t-spin-setup'))     defaultSpin = 'tspin';
+    else if (cats.includes('all-spin-setup')) defaultSpin = 'allspin';
+
+    const item = document.createElement('div');
+    item.className      = 'ap-pos-item';
+    item.dataset.index  = i;
+    item.innerHTML = `
+      <label class="ap-pos-header">
+        <input type="checkbox" class="ap-pos-cb" checked>
+        <span class="ap-pos-name">${_esc(pos.name || '(unnamed)')}</span>
+      </label>
+      <div class="ap-pos-meta">
+        ${pos.hold  ? `<span class="ap-meta-chip">Hold: ${_esc(pos.hold)}</span>` : ''}
+        ${pos.queue ? `<span class="ap-meta-chip">Queue: ${_esc(pos.queue)}</span>` : ''}
+        ${cats.length ? `<span class="ap-meta-chip">${cats.map(_esc).join(', ')}</span>` : ''}
+      </div>
+      <div class="ap-pos-fields">
+        <label class="ap-field-row">
+          <span class="ap-field-label">Name</span>
+          <input type="text" class="ap-name-input" value="${_esc(pos.name || '')}" placeholder="Position name">
+        </label>
+        <label class="ap-field-row">
+          <span class="ap-field-label">Goal</span>
+          <input type="text" class="ap-goal-input" value="${_esc(pos.goal || '')}" placeholder="Describe the goal…">
+        </label>
+        <div class="ap-field-inline">
+          <label class="ap-field-row">
+            <span class="ap-field-label">Difficulty</span>
+            <input type="number" class="ap-diff-input" value="50" min="0" max="100">
+            <span class="ap-field-hint">0 = Hard &nbsp;·&nbsp; 100 = Easy</span>
+          </label>
+          <label class="ap-field-row">
+            <span class="ap-field-label">Spin Type</span>
+            <select class="ap-spin-select">
+              <option value=""${defaultSpin === ''        ? ' selected' : ''}>—</option>
+              <option value="tspin"${defaultSpin === 'tspin'    ? ' selected' : ''}>T-Spin</option>
+              <option value="allspin"${defaultSpin === 'allspin' ? ' selected' : ''}>All-Spin</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  document.getElementById('ap-pos-count').textContent =
+    `${_positions.length} position${_positions.length !== 1 ? 's' : ''} found`;
+  document.getElementById('ap-upload-area').style.display = 'none';
+  document.getElementById('ap-list-wrap').style.display   = '';
+  document.getElementById('ap-status').textContent        = '';
+  _showError('');
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+
+function _submit() {
+  _showError('');
+  document.getElementById('ap-status').textContent = '';
+
+  if (!PuzzleDB.isReady()) {
+    _showError('Database not ready yet — please wait a moment and try again.');
+    return;
+  }
+
+  const items = [...document.querySelectorAll('.ap-pos-item')];
+  const toAdd = items.filter(el => el.querySelector('.ap-pos-cb').checked);
+
+  if (!toAdd.length) {
+    _showError('No positions selected.');
+    return;
+  }
+
+  let added = 0, skipped = 0;
+  const errors = [];
+
+  toAdd.forEach(item => {
+    const i    = +item.dataset.index;
+    const pos  = _positions[i];
+    const id   = pos.id || `pos-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const name = item.querySelector('.ap-name-input').value.trim() || pos.name || 'Unnamed';
+    const goal = item.querySelector('.ap-goal-input').value.trim();
+    const diff = Math.max(0, Math.min(100, parseInt(item.querySelector('.ap-diff-input').value, 10) || 50));
+    const spin = item.querySelector('.ap-spin-select').value;
+    const cats = Array.isArray(pos.categories) ? pos.categories : [];
+
+    try {
+      const changed = PuzzleDB.run(
+        `INSERT OR IGNORE INTO puzzles
+           (id, name, board, hold, queue, goal, description, difficulty, spin_type, setup_types)
+         VALUES
+           (:id, :name, :board, :hold, :queue, :goal, '', :diff, :spin, :cats)`,
+        {
+          ':id':    id,
+          ':name':  name,
+          ':board': JSON.stringify(pos.board),
+          ':hold':  pos.hold  || '',
+          ':queue': pos.queue || '',
+          ':goal':  goal,
+          ':diff':  diff,
+          ':spin':  spin,
+          ':cats':  JSON.stringify(cats),
+        }
+      );
+      if (changed > 0) added++;
+      else skipped++;
+    } catch (err) {
+      errors.push(`"${pos.name}": ${err.message}`);
+    }
+  });
+
+  if (errors.length) {
+    _showError('Some positions failed:\n' + errors.join('\n'));
+    return;
+  }
+
+  _downloadDb();
+
+  const parts = [];
+  if (added)   parts.push(`${added} position${added   !== 1 ? 's' : ''} added`);
+  if (skipped) parts.push(`${skipped} skipped (duplicate ID${skipped !== 1 ? 's' : ''})`);
+
+  document.getElementById('ap-status').innerHTML =
+    `<strong>${parts.join(', ')}.</strong><br>` +
+    `<span style="color:var(--text-muted)">` +
+    `<code>puzzles.db</code> downloaded — replace <code>data/puzzles.db</code> ` +
+    `and run <code>node tools/generate-embed.js</code> to persist across page reloads.</span>`;
+}
+
+function _downloadDb() {
+  const data = PuzzleDB.exportDb();
+  const blob = new Blob([data], { type: 'application/octet-stream' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'puzzles.db'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────────
+
+document.getElementById('ap-upload-btn').addEventListener('click', () => {
+  document.getElementById('ap-file-input').value = '';
+  document.getElementById('ap-file-input').click();
+});
+
+document.getElementById('ap-file-input').addEventListener('change', function () {
+  if (this.files[0]) _handleFile(this.files[0]);
+});
+
+document.getElementById('ap-select-all').addEventListener('click',   () => {
+  document.querySelectorAll('.ap-pos-cb').forEach(cb => { cb.checked = true; });
+});
+document.getElementById('ap-deselect-all').addEventListener('click', () => {
+  document.querySelectorAll('.ap-pos-cb').forEach(cb => { cb.checked = false; });
+});
+document.getElementById('ap-back-btn').addEventListener('click',     _reset);
+document.getElementById('ap-submit-btn').addEventListener('click',   _submit);
+</script>
+
+</body>
+</html>

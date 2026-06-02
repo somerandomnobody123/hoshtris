@@ -63,6 +63,19 @@ const PuzzleDB = {
     stmt.free();
     return rows;
   },
+
+  /** Execute a non-SELECT statement. Returns number of rows affected. */
+  run(sql, params = {}) {
+    if (!this._db) throw new Error('DB not loaded');
+    this._db.run(sql, params);
+    return this._db.getRowsModified();
+  },
+
+  /** Export the in-memory database as a Uint8Array for downloading. */
+  exportDb() {
+    if (!this._db) throw new Error('DB not loaded');
+    return this._db.export();
+  },
 };
 
 function _b64ToUint8Array(b64) {

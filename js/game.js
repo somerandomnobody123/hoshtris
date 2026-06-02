@@ -274,6 +274,7 @@ function rotatePiece(dir) {
       gameState.lastKick         = kicks[i];
       resetLockDelay();
       render();
+      reapplyDAS();
       return true;
     }
   }
@@ -303,6 +304,7 @@ function rotate180() {
       gameState.lastKick    = KICKS_180[i];
       resetLockDelay();
       render();
+      reapplyDAS();
       return true;
     }
   }

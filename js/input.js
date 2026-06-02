@@ -251,6 +251,21 @@ function onPieceSpawn() {
   if (sdCode && input.heldKeys.has(sdCode)) startSDF();
 }
 
+/**
+ * reapplyDAS()
+ *
+ * Called after a successful rotation. If DAS is already charged and a lateral
+ * direction is held, re-fires the shift so movement persists through rotation.
+ * With ARR=0 this re-runs shiftToWall; with ARR>0 the interval is still live
+ * so we just fire one immediate step to avoid a gap.
+ */
+function reapplyDAS() {
+  if (input.dasDir !== 0 && input.dasReady) {
+    if (HANDLING.arr === 0) shiftToWall(input.dasDir);
+    else { shiftOnce(input.dasDir); flashArrBar(); }
+  }
+}
+
 // ─── SDF helpers ──────────────────────────────────────────────────────────────
 
 /** Cancel the active SDF interval. */
